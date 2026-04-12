@@ -662,52 +662,23 @@
         try {
             const response = await fetch('/.netlify/functions/solve', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     messages: [{ role: "user", content: content }],
                     model: "llama-3.2-11b-vision-preview",
-                    temperature: 0.2,
-                    stream: true
+                    temperature: 0.2
                 })
             });
 
             if (!response.ok) {
-                let errorMessage = `Server Error: ${response.status}`;
-                try {
-                    const errData = await response.json();
-                    errorMessage = errData.error || errorMessage;
-                } catch (e) {
-                    if (response.status === 404) errorMessage = "API Endpoint not found. Check Netlify deployment.";
-                }
-                throw new Error(errorMessage);
+                throw new Error('API request failed');
             }
 
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder();
-            let fullContent = "";
-
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-                
-                const chunk = decoder.decode(value);
-                const lines = chunk.split('\n');
-                
-                for (const line of lines) {
-                    if (line.startsWith('data: ') && line !== 'data: [DONE]') {
-                        try {
-                            const data = JSON.parse(line.substring(6));
-                            const content = data.choices[0].delta.content || "";
-                            fullContent += content;
-                            document.getElementById('solutionResult').innerHTML = marked.parse(fullContent);
-                        } catch (e) {}
-                    }
-                }
-            }
-            
+            const data = await response.json();
+            const fullContent = data.content;
+            document.getElementById('solutionResult').innerHTML = marked.parse(fullContent);
             saveToHistory(customMsg.substring(0, 25) || "Analysis Result", fullContent);
             if (window.MathJax) MathJax.typeset();
-
         } catch (error) {
             showNotification(error.message, 'danger');
         } finally {
