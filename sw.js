@@ -36,7 +36,8 @@ self.addEventListener('activate', (event) => {
 
 // Cache-First Strategy
 self.addEventListener('fetch', (event) => {
-  const isApiRequest = event.request.url.includes('/.netlify/functions/');
+  const url = new URL(event.request.url);
+  const isApiRequest = url.pathname.startsWith('/api/');
   const isGetRequest = event.request.method === 'GET';
 
   // Skip cache for API calls or non-GET requests

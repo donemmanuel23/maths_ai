@@ -701,7 +701,12 @@
 
         try {
             const localKey = localStorage.getItem('groq_api_key');
-            const response = await fetch('/.netlify/functions/solve', {
+           
+            if (!localKey && !uploadedImage && !customMsg) {
+                 throw new Error('Please enter an API Key in the sidebar or check your configuration.');
+            }
+
+            const response = await fetch('/api/solve', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -713,7 +718,15 @@
             });
 
             if (!response.ok) {
+                if (response.status === 404) {
+                    throw new Error('Endpoint not found (404). Check if the "functions/api/solve.js" file is pushed to GitHub.');
+                }
                 const errorData = await response.json().catch(() => ({}));
+                
+                if (response.status === 404) {
+                    throw new Error('API route not found (404). Ensure your "functions" folder is in the root and you deployed via GitHub/Wrangler.');
+                }
+
                 const errorMessage = errorData.error || `Server Error: ${response.status}`;
                 
                 if (response.status === 401 || errorMessage.includes('missing') || errorMessage.includes('Configuration')) {
