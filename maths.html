@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Solver AI | Premium Dashboard</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+        :root {
+            --accent: #6366f1;
+            --accent-hover: #4f46e5;
+            --bg-main: #f8fafc;
+            --glass: rgba(255, 255, 255, 0.7);
+            --border: #e2e8f0;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            color: var(--text-main);
+            overflow-x: hidden;
+        }
+
+        /* --- Layout --- */
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* --- Sidebar Glassmorphism --- */
+        .sidebar {
+            width: 280px;
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            border-right: 1px solid var(--border);
+            padding: 1.5rem;
+            position: fixed;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            z-index: 1000;
+        }
+
+        .main-stage {
+            margin-left: 280px;
+            flex: 1;
+            padding: 2rem 3rem;
+        }
+
+        /* --- Brand & Nav --- */
+        .brand-logo {
+            font-weight: 700;
+            font-size: 1.4rem;
+            color: var(--accent);
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 2.5rem;
+        }
+
+        .nav-link {
+            color: var(--text-muted);
+            font-weight: 500;
+            padding: 0.8rem 1rem;
+            border-radius: 12px;
+            transition: all 0.2s;
+            margin-bottom: 5px;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            background: #fff;
+            color: var(--accent);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+        }
+
+        /* --- Top Status Bar --- */
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        /* --- Modern Card Design --- */
+        .neo-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            box-shadow: 0 10px 30px -10px rgba(0,0,0,0.04);
+            overflow: hidden;
+        }
+
+        .hero-banner {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            border-radius: 24px;
+            padding: 3rem;
+            color: white;
+            position: relative;
+            margin-bottom: 2.5rem;
+            overflow: hidden;
+        }
+
+        .hero-banner::after {
+            content: '';
+            position: absolute;
+            top: -50px;
+            right: -50px;
+            width: 200px;
+            height: 200px;
+            background: var(--accent);
+            filter: blur(100px);
+            opacity: 0.3;
+        }
+
+        /* --- Advanced Dropzone --- */
+        .dropzone {
+            border: 2px dashed #cbd5e1;
+            border-radius: 20px;
+            padding: 4rem 2rem;
+            text-align: center;
+            transition: 0.3s;
+            background: #fdfdff;
+            /* Cursor changed to default since box is no longer clickable */
+            cursor: default; 
+        }
+
+        .dropzone.drag-over {
+            border-color: var(--accent);
+            background: #f5f3ff;
+        }
+
+        .preview-image {
+            border-radius: 16px;
+            max-height: 250px;
+            object-fit: contain;
+            width: 100%;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border);
+        }
+
+        /* --- Animated Solve Button --- */
+        .btn-solve {
+            background: linear-gradient(90deg, #6366f1, #8b5cf6, #6366f1);
+            background-size: 200% auto;
+            border: none;
+            color: white;
+            font-weight: 600;
+            padding: 1rem;
+            border-radius: 14px;
+            transition: 0.5s;
+        }
+
+        .btn-solve:hover {
+            background-position: right center;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
+        }
+
+       /* --- Solution Content Stylings --- */
+.solution-text {
+    color: #334155;
+    line-height: 1.8;
+    font-size: 0.95rem; /* Base text size */
+}
+
+/* This targets the Step titles (h1, h2, h3, etc.) */
+.solution-text h1, 
+.solution-text h2, 
+.solution-text h3, 
+.solution-text h4 {
+    font-size: 1.1rem; /* Smaller, cleaner header size */
+    font-weight: 700;
+    margin-top: 1.25rem;
+    margin-bottom: 0.5rem;
+    color: var(--text-main);
+}
+
+.solution-text code {
+    color: var(--accent);
+    background: #f1f5f9;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.9em; /* Makes LaTeX/Code slightly smaller to match */
+}
+
+        /* --- Custom Notification --- */
+        .toast-custom {
+            background: #0f172a;
+            color: white;
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+        }
+
+        /* Mobile fallback */
+        @media (max-width: 992px) {
+            .sidebar { display: none; }
+            .main-stage { margin-left: 0; padding: 1.5rem; }
+        }
+
+        /* Mobile sidebar toggle */
+@media (max-width: 992px) {
+    .sidebar {
+        position: fixed;
+        left: -100%;
+        transition: 0.3s;
+    }
+
+    .sidebar.active {
+        left: 0;
+    }
+}
+
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <aside class="sidebar">
+        <div class="brand-logo">
+            <div style="background: var(--accent); width: 35px; height: 35px; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                <i class="bi bi-braces text-white"></i>
+            </div>
+            <span>MathAI <span style="font-weight: 400; color: var(--text-muted);">Pro</span></span>
+        </div>
+
+        <nav class="nav flex-column mb-auto">
+            <a class="nav-link active" href="#"><i class="bi bi-house-door me-2"></i> Dashboard</a>
+            <a class="nav-link" href="#"><i class="bi bi-clock-history me-2"></i> Problem History</a>
+            <a class="nav-link" href="#"><i class="bi bi-bookmark-star me-2"></i> Saved Formulas</a>
+        </nav>
+
+        <div class="mt-4 p-3 rounded-4" style="background: #f1f5f9; border: 1px solid var(--border);">
+            <p class="small fw-bold mb-2">API Configuration</p>
+            <input type="password" class="form-control form-control-sm mb-2 border-0 bg-white" id="apiKey" placeholder="Enter Groq Key">
+            <button class="btn btn-dark btn-sm w-100 rounded-3" onclick="saveApiKey()">Sync Key</button>
+        </div>
+        
+        <div class="pt-4 text-center">
+            <p class="text-muted" style="font-size: 0.75rem;">Status: <span class="text-success">● AI Online</span></p>
+        </div>
+    </aside>
+    <main class="main-stage">
+        <header class="status-bar">
+            <button class = "btn btn-light d-lg-none me-2" id="menuToggle">
+    <i class = "bi bi-list" style = "font-size: 1.5rem; "></i>
+</button>
+            <div>
+                <h4 class="fw-bold mb-0">Welcome Scholar!</h4>
+                <p class="text-muted small">Ready to solve some equations?</p>
+            </div>
+            <div class="d-flex gap-3">
+                <button class="btn btn-outline-secondary rounded-pill btn-sm px-3"><i class="bi bi-question-circle"></i></button>
+                <div class="rounded-pill bg-white border px-3 py-1 d-flex align-items-center gap-2">
+                    <span class="small fw-600">Supported by Emmanuel</span>
+                </div>
+            </div>
+        </header>
+
+        <section class="hero-banner">
+            <div class="row align-items-center">
+                <div class="col-lg-7">
+                    <h1 class="display-6 fw-bold mb-3">AI Powered Mathematics</h1>
+                    <p class="opacity-75 lead mb-0" style="font-size: 1rem;">Upload a photo of your handwritten homework or digital textbook problem for instant clarity.</p>
+                </div>
+            </div>
+        </section>
+
+        <div class="row g-4">
+            <div class="col-xl-5">
+                <div class="neo-card p-4 h-100">
+                    <h6 class="fw-bold mb-4 d-flex align-items-center"><i class="bi bi-plus-circle-dotted me-2 text-primary"></i>New Problem</h6>
+                    
+                    <div class="dropzone mb-4" id="uploadArea">
+                        <div id="uploadContent">
+                            <i class="bi bi-cloud-arrow-up text-primary mb-3" style="font-size: 3rem;"></i>
+                            <h6 class="fw-bold">Drag image here</h6>
+                            <p class="text-muted small">PNG, JPG or Screenshot</p>
+                            <button id="browseBtn" class="btn btn-light border btn-sm mt-2 px-4 rounded-pill">Browse Files</button>
+                        </div>
+                        <input type="file" id="fileInput" accept="image/*" style="display: none;">
+                    </div>
+
+                    <div id="imagePreview" style="display: none;">
+                        <img id="previewImg" class="preview-image" alt="Problem Preview">
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-solve" id="solveBtn" onclick="solveMathProblem()">
+                                <i class="bi bi-stars me-2"></i>Generate Solution
+                            </button>
+                            <button class="btn btn-link text-muted btn-sm" onclick="clearImage()">Discard and restart</button>
+                        </div>
+                    </div>
+
+                    <div class="text-center py-4" id="loadingSpinner" style="display: none;">
+                        <div class="spinner-border text-primary" role="status"></div>
+                        <p class="mt-3 text-muted">Thinking...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-7">
+                <div class="neo-card p-4 h-100" id="placeholderResult">
+                    <div class="d-flex flex-column align-items-center justify-content-center h-100 text-center py-5">
+                        <div class="bg-light rounded-circle p-4 mb-3">
+                            <i class="bi bi-layout-text-sidebar-reverse text-muted" style="font-size: 2rem;"></i>
+                        </div>
+                        <h6 class="fw-bold text-muted">Analysis Window</h6>
+                        <p class="text-muted small px-5">Your step-by-step breakdown will appear here once the AI processes the image.</p>
+                    </div>
+                </div>
+
+                <div class="neo-card p-4 h-100" id="resultsCard" style="display: none;">
+                    <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+                        <h6 class="fw-bold mb-0">Solution Breakdown</h6>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-light btn-sm rounded-pill" onclick="window.print()"><i class="bi bi-download"></i></button>
+                            <button class="btn btn-light btn-sm rounded-pill"><i class="bi bi-share"></i></button>
+                        </div>
+                    </div>
+                    <div class="solution-text" id="solutionResult">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked@9.1.2/marked.min.js"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+<script>
+
+    // Toggle sidebar on mobile
+document.getElementById('menuToggle').addEventListener('click', function() {
+    document.querySelector('.sidebar').classList.toggle('active');
+});
+    let uploadedImage = null;
+    let apiKey = '';
+
+    window.addEventListener('load', function() {
+        const savedKey = localStorage.getItem('groq_api_key');
+        if (savedKey) {
+            document.getElementById('apiKey').value = savedKey;
+            apiKey = savedKey;
+        }
+
+        // Allow pressing "Enter" to save the API key
+        document.getElementById('apiKey').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                saveApiKey();
+            }
+        });
+    });
+
+    function saveApiKey() {
+        const keyInput = document.getElementById('apiKey');
+        apiKey = keyInput.value.trim();
+        if (apiKey) {
+            localStorage.setItem('groq_api_key', apiKey);
+            showNotification('Sync Success', 'success');
+        }
+    }
+
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('fileInput');
+    const browseBtn = document.getElementById('browseBtn');
+
+    // ONLY the button triggers the browser
+    browseBtn.addEventListener('click', () => {
+        fileInput.click();
+    });
+
+    // BOX handles visual drag feedback and drops
+    uploadArea.addEventListener('dragover', (e) => { 
+        e.preventDefault(); 
+        uploadArea.classList.add('drag-over'); 
+    });
+    
+    uploadArea.addEventListener('dragleave', () => { 
+        uploadArea.classList.remove('drag-over'); 
+    });
+    
+    uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove('drag-over');
+        if (e.dataTransfer.files.length > 0) handleFile(e.dataTransfer.files[0]);
+    });
+
+    fileInput.addEventListener('change', (e) => { if (e.target.files.length > 0) handleFile(e.target.files[0]); });
+
+    function handleFile(file) {
+        if (!file.type.startsWith('image/')) return showNotification('Images only', 'danger');
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            uploadedImage = e.target.result;
+            document.getElementById('imagePreview').style.display = 'block';
+            document.getElementById('previewImg').src = e.target.result;
+            document.getElementById('uploadArea').style.display = 'none';
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function clearImage() {
+        uploadedImage = null;
+        document.getElementById('imagePreview').style.display = 'none';
+        document.getElementById('uploadArea').style.display = 'block';
+        document.getElementById('resultsCard').style.display = 'none';
+        document.getElementById('placeholderResult').style.display = 'block';
+        fileInput.value = '';
+    }
+
+    async function solveMathProblem() {
+        if (!uploadedImage || !apiKey) return showNotification('Key or Image missing', 'warning');
+        
+        document.getElementById('loadingSpinner').style.display = 'block';
+        document.getElementById('solveBtn').disabled = true;
+        document.getElementById('placeholderResult').style.display = 'none';
+
+        try {
+            const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+                body: JSON.stringify({
+                    messages: [{ role: "user", content: [
+                        { type: "text", text: "Solve this math problem step by step. Do NOT use LaTeX or dollar signs. Use plain text only." },
+                        { type: "image_url", image_url: { url: uploadedImage } }
+                    ]}],
+                    model: "meta-llama/llama-4-scout-17b-16e-instruct",
+                    temperature: 0.3
+                })
+            });
+            const data = await response.json();
+            displaySolution(data.choices[0].message.content);
+        } catch (error) {
+            showNotification('API Error', 'danger');
+        } finally {
+            document.getElementById('loadingSpinner').style.display = 'none';
+            document.getElementById('solveBtn').disabled = false;
+        }
+    }
+
+    function displaySolution(solution) {
+        const resultCard = document.getElementById('resultsCard');
+        const solutionResult = document.getElementById('solutionResult');
+        solutionResult.innerHTML = marked.parse(solution);
+        resultCard.style.display = 'block';
+        if (window.MathJax) MathJax.typeset();
+    }
+
+    function showNotification(msg) {
+        const div = document.createElement('div');
+        div.className = 'toast-custom position-fixed bottom-0 end-0 m-4';
+        div.style.zIndex = '2000';
+        div.innerHTML = `<i class="bi bi-info-circle me-2"></i> ${msg}`;
+        document.body.appendChild(div);
+        setTimeout(() => div.remove(), 3000);
+    }
+</script>
+
+</body>
+</html>
