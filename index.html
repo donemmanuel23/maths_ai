@@ -267,7 +267,8 @@
             .sidebar .mt-3, 
             .sidebar #historyList, 
             .sidebar .mt-4, 
-            .sidebar .pt-4 {
+            .sidebar .pt-4,
+            .sidebar #apiKeyContainer {
                 grid-column: span 3;
             }
 
@@ -464,6 +465,8 @@
             </div>
             <div class="modal-body text-muted">
                 PolySolve AI is a professional academic assistant powered by state-of-the-art Vision models.
+                <hr>
+                <button class="btn btn-outline-danger btn-sm w-100 rounded-pill mt-2" onclick="resetApiKey()" data-bs-dismiss="modal">Reset API Key</button>
             </div>
         </div>
     </div>
@@ -547,10 +550,17 @@
         }
     }
 
+    function resetApiKey() {
+        localStorage.removeItem('groq_api_key');
+        checkApiKey();
+        showNotification('API Key cleared. You can now enter a new one in the menu.', 'info');
+    }
+
     function checkApiKey() {
         const savedKey = localStorage.getItem('groq_api_key');
         const container = document.getElementById('apiKeyContainer');
-        if (savedKey) container.style.display = 'none';
+        // Show if missing, hide if present
+        container.style.display = savedKey ? 'none' : 'block';
     }
 
     const uploadArea = document.getElementById('uploadArea');
@@ -700,7 +710,7 @@
                 const errorData = await response.json().catch(() => ({}));
                 const errorMessage = errorData.error || `Server Error: ${response.status}`;
                 
-                if (errorMessage.includes('missing') || errorMessage.includes('Configuration')) {
+                if (response.status === 401 || errorMessage.includes('missing') || errorMessage.includes('Configuration')) {
                     document.getElementById('apiKeyContainer').style.display = 'block';
                     throw new Error('API Key Required: Please paste your key in the configuration area.');
                 }
