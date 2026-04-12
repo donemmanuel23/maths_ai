@@ -542,10 +542,12 @@
     });
 
     function saveApiKey() {
-        const key = document.getElementById('apiKeyInput').value.trim();
+        const input = document.getElementById('apiKeyInput');
+        const key = input.value.trim();
         if (key) {
             localStorage.setItem('groq_api_key', key);
             showNotification('API Key synced successfully!');
+            input.value = '';
             checkApiKey();
         }
     }
@@ -558,9 +560,13 @@
 
     function checkApiKey() {
         const savedKey = localStorage.getItem('groq_api_key');
-        const container = document.getElementById('apiKeyContainer');
-        // Show if missing, hide if present
-        container.style.display = savedKey ? 'none' : 'block';
+        const input = document.getElementById('apiKeyInput');
+        if (savedKey) {
+            input.placeholder = "Key saved (Update?)";
+        } else {
+            input.placeholder = "Paste Groq Key...";
+        }
+        document.getElementById('apiKeyContainer').style.display = 'block';
     }
 
     const uploadArea = document.getElementById('uploadArea');
