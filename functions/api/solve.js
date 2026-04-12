@@ -1,15 +1,27 @@
+export async function onRequestOptions() {
+  return new Response(null, {
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+    },
+  });
+}
+
 export async function onRequestPost(context) {
   const { request, env } = context;
 
   try {
     const body = await request.json();
-    // Access environment variables via the env object in Cloudflare
     const apiKey = env.GROQ_API_KEY || body.apiKey;
 
     if (!apiKey) {
       return new Response(JSON.stringify({ 
         error: 'Configuration Error: API Key is missing. Please paste it in the setup area.' 
-      }), { status: 401 });
+      }), { 
+        status: 401,
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+      });
     }
     
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -26,25 +38,33 @@ export async function onRequestPost(context) {
       })
     });
 
-    if (!response.ok) {
-      const error = await response.json();
-      return new Response(JSON.stringify({ 
-        error: error.error?.message || 'AI Provider Error' 
-      }), { status: response.status });
-    }
-
     const data = await response.json();
+
+    if (!response.ok) {
+      return new Response(JSON.stringify({ 
+        error: data.error?.message || 'AI Provider Error' 
+      }), { 
+        status: response.status,
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+      });
+    }
     
     return new Response(JSON.stringify({ 
       content: data.choices[0].message.content 
     }), { 
       status: 200, 
-      headers: { 'Content-Type': 'application/json' } 
+      headers: { 
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      } 
     });
     
   } catch (err) {
     return new Response(JSON.stringify({ 
-      error: 'Internal Server Error: ' + err.message 
-    }), { status: 500 });
+      error: 'Worker Error: ' + err.message 
+    }), { 
+      status: 500,
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+    });
   }
 }

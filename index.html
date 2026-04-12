@@ -701,9 +701,10 @@
 
         try {
             const localKey = localStorage.getItem('groq_api_key');
-           
+            
+            // Pre-flight check for API Key if not using server-side env variables
             if (!localKey && !uploadedImage && !customMsg) {
-                 throw new Error('Please enter an API Key in the sidebar or check your configuration.');
+                 throw new Error('Please enter an API Key in the sidebar configuration.');
             }
 
             const response = await fetch('/api/solve', {
@@ -718,13 +719,10 @@
             });
 
             if (!response.ok) {
-                if (response.status === 404) {
-                    throw new Error('Endpoint not found (404). Check if the "functions/api/solve.js" file is pushed to GitHub.');
-                }
                 const errorData = await response.json().catch(() => ({}));
                 
                 if (response.status === 404) {
-                    throw new Error('API route not found (404). Ensure your "functions" folder is in the root and you deployed via GitHub/Wrangler.');
+                    throw new Error('Worker endpoint not found (404). Check your Worker route configuration.');
                 }
 
                 const errorMessage = errorData.error || `Server Error: ${response.status}`;
