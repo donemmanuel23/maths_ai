@@ -3,7 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Math Solver AI | Premium Dashboard</title>
+    <title>PolySolve AI</title>
+    <meta name="theme-color" content="#6366f1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="icon-192.png">
+    <link rel="apple-touch-icon" href="icon-192.png">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
@@ -17,6 +22,7 @@
             --border: #e2e8f0;
             --text-main: #0f172a;
             --text-muted: #64748b;
+            --card-bg: #ffffff;
         }
 
         body {
@@ -89,7 +95,7 @@
 
         /* --- Modern Card Design --- */
         .neo-card {
-            background: white;
+            background: var(--card-bg);
             border: 1px solid var(--border);
             border-radius: 24px;
             box-shadow: 0 10px 30px -10px rgba(0,0,0,0.04);
@@ -126,8 +132,7 @@
             text-align: center;
             transition: 0.3s;
             background: #fdfdff;
-            /* Cursor changed to default since box is no longer clickable */
-            cursor: default; 
+            cursor: pointer; 
         }
 
         .dropzone.drag-over {
@@ -189,6 +194,21 @@
     font-size: 0.9em; /* Makes LaTeX/Code slightly smaller to match */
 }
 
+        /* --- Skeleton Loading --- */
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+            border-radius: 4px;
+            height: 1em;
+            margin-bottom: 0.5rem;
+        }
+
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
         /* --- Custom Notification --- */
         .toast-custom {
             background: #0f172a;
@@ -208,13 +228,79 @@
 @media (max-width: 992px) {
     .sidebar {
         position: fixed;
-        left: -100%;
+                left: -320px;
         transition: 0.3s;
+                width: 300px;
+                display: grid !important;
+                grid-template-columns: repeat(3, 1fr);
+                grid-auto-rows: min-content;
+                gap: 10px;
+                padding: 1.5rem;
+                align-content: start;
+                overflow-y: auto;
+                box-shadow: 15px 0 30px rgba(0,0,0,0.1);
+                border-radius: 0 24px 24px 0;
+                border-right: none;
     }
 
     .sidebar.active {
         left: 0;
     }
+
+            .sidebar-overlay {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(15, 23, 42, 0.4);
+                backdrop-filter: blur(4px);
+                z-index: 999;
+            }
+
+            .sidebar-overlay.active {
+                display: block;
+            }
+
+            .sidebar .brand-logo, 
+            .sidebar .mt-3, 
+            .sidebar #historyList, 
+            .sidebar .mt-4, 
+            .sidebar .pt-4 {
+                grid-column: span 3;
+            }
+
+            .sidebar nav { display: contents; }
+
+            .sidebar .nav-link, 
+            .sidebar .px-3.mb-3 {
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+
+            .sidebar .nav-link, 
+            .sidebar .btn-sm {
+                display: flex !important;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                text-align: center;
+                padding: 0.8rem 0.2rem !important;
+                font-size: 0.7rem !important;
+                height: 100%;
+                background: var(--card-bg);
+                border: 1px solid var(--border);
+                border-radius: 12px;
+                color: var(--text-main);
+            }
+
+            .sidebar .nav-link i, 
+            .sidebar .btn-sm i {
+                margin: 0 0 5px 0 !important;
+                font-size: 1.2rem;
+                color: var(--accent);
+            }
 }
 
     </style>
@@ -222,26 +308,33 @@
 <body>
 
 <div class="app-container">
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
     <aside class="sidebar">
         <div class="brand-logo">
             <div style="background: var(--accent); width: 35px; height: 35px; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
-                <i class="bi bi-braces text-white"></i>
+                <i class="bi bi-cpu text-white"></i>
             </div>
-            <span>MathAI <span style="font-weight: 400; color: var(--text-muted);">Pro</span></span>
+            <span>PolySolve <span style="font-weight: 400; color: var(--text-muted);">AI</span></span>
         </div>
 
         <nav class="nav flex-column mb-auto">
-            <a class="nav-link active" href="#"><i class="bi bi-house-door me-2"></i> Dashboard</a>
-            <a class="nav-link" href="#"><i class="bi bi-clock-history me-2"></i> Problem History</a>
-            <a class="nav-link" href="#"><i class="bi bi-bookmark-star me-2"></i> Saved Formulas</a>
+            <a class="nav-link active" href="#" onclick="showSection('dashboard')"><i class="bi bi-house-door me-2"></i> Dashboard</a>
+            <div class="mt-3 mb-2 px-3 small text-uppercase fw-bold text-muted" style="font-size: 0.65rem;">Recent Solutions</div>
+            <div id="historyList" class="mb-3">
+                <!-- History items will be injected here -->
+                <p class="px-3 small text-muted italic">No history yet</p>
+            </div>
+            <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#aboutModal"><i class="bi bi-info-circle me-2"></i> About</a>
+            <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#privacyModal"><i class="bi bi-shield-check me-2"></i> Privacy</a>
+            <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#contactModal"><i class="bi bi-envelope me-2"></i> Contact</a>
         </nav>
 
-        <div class="mt-4 p-3 rounded-4" style="background: #f1f5f9; border: 1px solid var(--border);">
-            <p class="small fw-bold mb-2">API Configuration</p>
-            <input type="password" class="form-control form-control-sm mb-2 border-0 bg-white" id="apiKey" placeholder="Enter Groq Key">
-            <button class="btn btn-dark btn-sm w-100 rounded-3" onclick="saveApiKey()">Sync Key</button>
+        <div class="px-3 mb-3" id="installContainer" style="display: none;">
+            <button class="btn btn-primary btn-sm w-100 rounded-pill" id="installBtn">
+                <i class="bi bi-download me-2"></i> Install App
+            </button>
         </div>
-        
+
         <div class="pt-4 text-center">
             <p class="text-muted" style="font-size: 0.75rem;">Status: <span class="text-success">● AI Online</span></p>
         </div>
@@ -266,8 +359,8 @@
         <section class="hero-banner">
             <div class="row align-items-center">
                 <div class="col-lg-7">
-                    <h1 class="display-6 fw-bold mb-3">AI Powered Mathematics</h1>
-                    <p class="opacity-75 lead mb-0" style="font-size: 1rem;">Upload a photo of your handwritten homework or digital textbook problem for instant clarity.</p>
+                    <h1 class="display-6 fw-bold mb-3">Universal AI Solver</h1>
+                    <p class="opacity-75 lead mb-0" style="font-size: 1rem;">Upload any problem—math, science, history, or code. Get instant, expert-level breakdowns from a single photo.</p>
                 </div>
             </div>
         </section>
@@ -277,10 +370,10 @@
                 <div class="neo-card p-4 h-100">
                     <h6 class="fw-bold mb-4 d-flex align-items-center"><i class="bi bi-plus-circle-dotted me-2 text-primary"></i>New Problem</h6>
                     
-                    <div class="dropzone mb-4" id="uploadArea">
+                    <div class="dropzone mb-3" id="uploadArea">
                         <div id="uploadContent">
-                            <i class="bi bi-cloud-arrow-up text-primary mb-3" style="font-size: 3rem;"></i>
-                            <h6 class="fw-bold">Drag image here</h6>
+                            <i class="bi bi-plus-circle text-primary mb-3" style="font-size: 3rem;"></i>
+                            <h6 class="fw-bold">Add files, upload image</h6>
                             <p class="text-muted small">PNG, JPG or Screenshot</p>
                             <button id="browseBtn" class="btn btn-light border btn-sm mt-2 px-4 rounded-pill">Browse Files</button>
                         </div>
@@ -289,13 +382,28 @@
 
                     <div id="imagePreview" style="display: none;">
                         <img id="previewImg" class="preview-image" alt="Problem Preview">
-                        <div class="d-grid gap-2">
-                            <button class="btn btn-solve" id="solveBtn" onclick="solveMathProblem()">
-                                <i class="bi bi-stars me-2"></i>Generate Solution
+                        <button class="btn btn-link text-muted btn-sm w-100 mb-3" onclick="clearImage()">Discard Image</button>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="small text-muted fw-bold mb-2">Problem Description / Text Input</label>
+                        <div class="input-group input-group-sm">
+                            <textarea class="form-control rounded-3 border-light shadow-sm" id="customInstructions" placeholder="Type your problem here or add instructions for the uploaded image..." rows="3"></textarea>
+                            <button class="btn btn-outline-primary border-light shadow-sm" type="button" id="voiceBtn" onclick="startVoiceInput()">
+                                <i class="bi bi-mic"></i>
                             </button>
-                            <button class="btn btn-link text-muted btn-sm" onclick="clearImage()">Discard and restart</button>
                         </div>
                     </div>
+
+                    <div class="mb-3 d-flex flex-wrap gap-2" id="suggestedPrompts">
+                        <span class="badge rounded-pill bg-light text-muted border py-2 px-3 cursor-pointer" onclick="usePrompt('Explain step-by-step')">Step-by-step</span>
+                        <span class="badge rounded-pill bg-light text-muted border py-2 px-3 cursor-pointer" onclick="usePrompt('Verify my answer')">Verify Answer</span>
+                        <span class="badge rounded-pill bg-light text-muted border py-2 px-3 cursor-pointer" onclick="usePrompt('Summarize key concepts')">Summarize</span>
+                    </div>
+
+                    <button class="btn btn-solve w-100 mb-3" id="solveBtn" onclick="solveMathProblem()">
+                        <i class="bi bi-stars me-2"></i>Generate Solution
+                    </button>
 
                     <div class="text-center py-4" id="loadingSpinner" style="display: none;">
                         <div class="spinner-border text-primary" role="status"></div>
@@ -319,11 +427,18 @@
                     <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
                         <h6 class="fw-bold mb-0">Solution Breakdown</h6>
                         <div class="d-flex gap-2">
-                            <button class="btn btn-light btn-sm rounded-pill" onclick="window.print()"><i class="bi bi-download"></i></button>
+                            <button class="btn btn-light btn-sm rounded-pill" onclick="copySolution()"><i class="bi bi-clipboard"></i></button>
+                            <button class="btn btn-light btn-sm rounded-pill" onclick="exportToTXT()" title="Export as TXT"><i class="bi bi-file-earmark-text"></i></button>
+                            <button class="btn btn-light btn-sm rounded-pill" onclick="exportToPDF()"><i class="bi bi-file-earmark-pdf"></i></button>
                             <button class="btn btn-light btn-sm rounded-pill"><i class="bi bi-share"></i></button>
                         </div>
                     </div>
                     <div class="solution-text" id="solutionResult">
+                    </div>
+                    <div id="streamingIndicator" class="mt-2" style="display: none;">
+                        <div class="skeleton" style="width: 100%;"></div>
+                        <div class="skeleton" style="width: 80%;"></div>
+                        <div class="skeleton" style="width: 40%;"></div>
                     </div>
                 </div>
             </div>
@@ -331,30 +446,85 @@
     </main>
 </div>
 
+<!-- Modals for Branding & Trust -->
+<div class="modal fade" id="aboutModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold">About PolySolve AI</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-muted">
+                PolySolve AI is a professional academic assistant powered by state-of-the-art Vision models.
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="privacyModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold">Privacy Policy</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-muted">
+                Your data is processed in real-time. We store your API key and history locally on your device. We do not store your uploaded images on our servers.
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="contactModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold">Feedback & Support</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-muted">
+                <p>Have a suggestion or found a bug? We'd love to hear from you.</p>
+                <a href="mailto:support@omnisolve.ai" class="btn btn-primary w-100 rounded-pill">Email Support</a>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked@9.1.2/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
 <script>
 
     // Toggle sidebar on mobile
-document.getElementById('menuToggle').addEventListener('click', function() {
-    document.querySelector('.sidebar').classList.toggle('active');
-});
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    const menuToggle = document.getElementById('menuToggle');
+
+    function toggleMenu() {
+        sidebar.classList.toggle('active');
+        overlay.classList.toggle('active');
+    }
+
+    menuToggle.addEventListener('click', toggleMenu);
+    overlay.addEventListener('click', toggleMenu);
+
     let uploadedImage = null;
-    let apiKey = '';
+    let deferredPrompt;
+    let lastRequestTime = 0;
+    const RATE_LIMIT_MS = 3000; // 3 second cooldown
 
     window.addEventListener('load', function() {
-        const savedKey = localStorage.getItem('groq_api_key');
-        if (savedKey) {
-            document.getElementById('apiKey').value = savedKey;
-            apiKey = savedKey;
-        }
+        renderHistory();
 
-        // Allow pressing "Enter" to save the API key
-        document.getElementById('apiKey').addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') {
-                saveApiKey();
+        // Global Keyboard Shortcuts
+        window.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                solveMathProblem();
+            }
+            if (e.key === 'Escape') {
+                clearImage();
             }
         });
     });
@@ -372,10 +542,14 @@ document.getElementById('menuToggle').addEventListener('click', function() {
     const fileInput = document.getElementById('fileInput');
     const browseBtn = document.getElementById('browseBtn');
 
-    // ONLY the button triggers the browser
-    browseBtn.addEventListener('click', () => {
+    // Making the whole area clickable for better UX
+    uploadArea.addEventListener('click', (e) => {
+        // Prevent double trigger if clicking the actual browse button
+        if (e.target === browseBtn) return;
         fileInput.click();
     });
+    
+    browseBtn.addEventListener('click', () => fileInput.click());
 
     // BOX handles visual drag feedback and drops
     uploadArea.addEventListener('dragover', (e) => { 
@@ -395,16 +569,30 @@ document.getElementById('menuToggle').addEventListener('click', function() {
 
     fileInput.addEventListener('change', (e) => { if (e.target.files.length > 0) handleFile(e.target.files[0]); });
 
-    function handleFile(file) {
+    async function handleFile(file) {
         if (!file.type.startsWith('image/')) return showNotification('Images only', 'danger');
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            uploadedImage = e.target.result;
+        
+        // Professional image compression for faster API calls
+        const img = new Image();
+        const objectUrl = URL.createObjectURL(file);
+        img.src = objectUrl;
+        
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const MAX_WIDTH = 1200;
+            const scale = Math.min(1, MAX_WIDTH / img.width);
+            canvas.width = img.width * scale;
+            canvas.height = img.height * scale;
+            
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            
+            uploadedImage = canvas.toDataURL('image/jpeg', 0.85);
             document.getElementById('imagePreview').style.display = 'block';
-            document.getElementById('previewImg').src = e.target.result;
+            document.getElementById('previewImg').src = uploadedImage;
             document.getElementById('uploadArea').style.display = 'none';
+            URL.revokeObjectURL(objectUrl); // Memory management
         };
-        reader.readAsDataURL(file);
     }
 
     function clearImage() {
@@ -413,56 +601,219 @@ document.getElementById('menuToggle').addEventListener('click', function() {
         document.getElementById('uploadArea').style.display = 'block';
         document.getElementById('resultsCard').style.display = 'none';
         document.getElementById('placeholderResult').style.display = 'block';
+        document.getElementById('solutionResult').innerHTML = '';
+        document.getElementById('customInstructions').value = '';
         fileInput.value = '';
     }
 
+    function usePrompt(text) {
+        document.getElementById('customInstructions').value = text;
+    }
+
+    function startVoiceInput() {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) return showNotification('Voice not supported', 'danger');
+        
+        const recognition = new SpeechRecognition();
+        const voiceBtn = document.getElementById('voiceBtn');
+        
+        recognition.onstart = () => {
+            voiceBtn.classList.replace('btn-outline-primary', 'btn-danger');
+            showNotification('Listening...', 'info');
+        };
+        
+        recognition.onresult = (event) => {
+            const transcript = event.results[0][0].transcript;
+            document.getElementById('customInstructions').value = transcript;
+        };
+        
+        recognition.onend = () => {
+            voiceBtn.classList.replace('btn-danger', 'btn-outline-primary');
+        };
+        
+        try {
+            recognition.start();
+        } catch (e) {
+            recognition.stop();
+        }
+    }
+
     async function solveMathProblem() {
-        if (!uploadedImage || !apiKey) return showNotification('Key or Image missing', 'warning');
+        const customMsg = document.getElementById('customInstructions').value.trim();
+        
+        if (!uploadedImage && !customMsg) return showNotification('Please upload an image or type a problem', 'warning');
+        
+        // Rate Limiting Logic
+        const now = Date.now();
+        if (now - lastRequestTime < RATE_LIMIT_MS) {
+            return showNotification(`Please wait ${Math.ceil((RATE_LIMIT_MS - (now - lastRequestTime))/1000)}s`, 'warning');
+        }
+        lastRequestTime = now;
         
         document.getElementById('loadingSpinner').style.display = 'block';
         document.getElementById('solveBtn').disabled = true;
         document.getElementById('placeholderResult').style.display = 'none';
+        document.getElementById('resultsCard').style.display = 'block';
+        document.getElementById('solutionResult').innerHTML = '';
+        document.getElementById('streamingIndicator').style.display = 'block';
+
+        // Construct the prompt and message content
+        const systemPrompt = `You are an expert academic assistant. Analyze the input and solve the problem. Rules: 1. Step-by-step breakdown. 2. Use LaTeX for math/science ($...$ for inline, $$...$$ for blocks). 3. Professional Markdown. 4. Be precise.`;
+        const content = [];
+        
+        if (uploadedImage) {
+            content.push({ type: "text", text: `${systemPrompt} ${customMsg ? 'User Instructions: ' + customMsg : ''}` });
+            content.push({ type: "image_url", image_url: { url: uploadedImage } });
+        } else {
+            content.push({ type: "text", text: `${systemPrompt} Problem to solve: ${customMsg}` });
+        }
 
         try {
-            const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            const response = await fetch('/.netlify/functions/solve', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    messages: [{ role: "user", content: [
-                        { type: "text", text: "Solve this math problem step by step. Do NOT use LaTeX or dollar signs. Use plain text only." },
-                        { type: "image_url", image_url: { url: uploadedImage } }
-                    ]}],
-                    model: "meta-llama/llama-4-scout-17b-16e-instruct",
-                    temperature: 0.3
+                    messages: [{ role: "user", content: content }],
+                    model: "llama-3.2-11b-vision-preview",
+                    temperature: 0.2,
+                    stream: true
                 })
             });
-            const data = await response.json();
-            displaySolution(data.choices[0].message.content);
+
+            if (!response.ok) throw new Error('API Connection Failed');
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let fullContent = "";
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                
+                const chunk = decoder.decode(value);
+                const lines = chunk.split('\n');
+                
+                for (const line of lines) {
+                    if (line.startsWith('data: ') && line !== 'data: [DONE]') {
+                        try {
+                            const data = JSON.parse(line.substring(6));
+                            const content = data.choices[0].delta.content || "";
+                            fullContent += content;
+                            document.getElementById('solutionResult').innerHTML = marked.parse(fullContent);
+                        } catch (e) {}
+                    }
+                }
+            }
+            
+            saveToHistory(customMsg.substring(0, 25) || "Analysis Result", fullContent);
+            if (window.MathJax) MathJax.typeset();
+
         } catch (error) {
-            showNotification('API Error', 'danger');
+            showNotification(error.message, 'danger');
         } finally {
             document.getElementById('loadingSpinner').style.display = 'none';
+            document.getElementById('streamingIndicator').style.display = 'none';
             document.getElementById('solveBtn').disabled = false;
         }
     }
 
-    function displaySolution(solution) {
-        const resultCard = document.getElementById('resultsCard');
-        const solutionResult = document.getElementById('solutionResult');
-        solutionResult.innerHTML = marked.parse(solution);
-        resultCard.style.display = 'block';
-        if (window.MathJax) MathJax.typeset();
+    function saveToHistory(subject, content) {
+        const history = JSON.parse(localStorage.getItem('omni_history') || '[]');
+        const newItem = {
+            id: Date.now(),
+            subject: subject,
+            content: content,
+            date: new Date().toLocaleDateString()
+        };
+        history.unshift(newItem);
+        localStorage.setItem('omni_history', JSON.stringify(history.slice(0, 10))); // Keep last 10
+        renderHistory();
     }
 
-    function showNotification(msg) {
+    function renderHistory() {
+        const history = JSON.parse(localStorage.getItem('omni_history') || '[]');
+        const container = document.getElementById('historyList');
+        if (history.length === 0) return;
+
+        container.innerHTML = history.map(item => `
+            <a href="#" class="nav-link small py-2 px-3" onclick="loadHistoryItem(${item.id})">
+                <i class="bi bi-file-text me-2"></i> ${item.subject}
+            </a>
+        `).join('');
+    }
+
+    function loadHistoryItem(id) {
+        const history = JSON.parse(localStorage.getItem('omni_history') || '[]');
+        const item = history.find(i => i.id === id);
+        if (item) {
+            document.getElementById('placeholderResult').style.display = 'none';
+            document.getElementById('resultsCard').style.display = 'block';
+            document.getElementById('solutionResult').innerHTML = marked.parse(item.content);
+            if (window.MathJax) MathJax.typeset();
+            if (window.innerWidth < 992) {
+                sidebar.classList.remove('active');
+                overlay.classList.remove('active');
+            }
+        }
+    }
+
+    function exportToPDF() {
+        const element = document.getElementById('solutionResult');
+        const opt = { margin: 1, filename: 'PolySolve_Report.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' } };
+        html2pdf().set(opt).from(element).save();
+    }
+
+    function exportToTXT() {
+        const text = document.getElementById('solutionResult').innerText;
+        const blob = new Blob([text], { type: 'text/plain' });
+        const anchor = document.createElement('a');
+        anchor.download = 'PolySolve_Solution.txt';
+        anchor.href = window.URL.createObjectURL(blob);
+        anchor.click();
+    }
+
+    function copySolution() {
+        const text = document.getElementById('solutionResult').innerText;
+        navigator.clipboard.writeText(text).then(() => {
+            showNotification('Copied to clipboard!');
+        });
+    }
+
+    function showNotification(msg, type = 'info') {
         const div = document.createElement('div');
         div.className = 'toast-custom position-fixed bottom-0 end-0 m-4';
         div.style.zIndex = '2000';
-        div.innerHTML = `<i class="bi bi-info-circle me-2"></i> ${msg}`;
+        div.innerHTML = `<i class="bi bi-${type === 'danger' ? 'exclamation-triangle' : 'info-circle'} me-2"></i> ${msg}`;
         document.body.appendChild(div);
         setTimeout(() => div.remove(), 3000);
     }
-</script>
 
+    // Register Service Worker for PWA
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js')
+                .then(reg => console.log('Service Worker registered'))
+                .catch(err => console.log('Service Worker failed', err));
+        });
+    }
+
+    // PWA Install Logic
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        document.getElementById('installContainer').style.display = 'block';
+    });
+
+    document.getElementById('installBtn').addEventListener('click', async () => {
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            if (outcome === 'accepted') {
+                document.getElementById('installContainer').style.display = 'none';
+            }
+            deferredPrompt = null;
+        }
+    });
+</script>
 </body>
 </html>
