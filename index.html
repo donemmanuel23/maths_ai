@@ -529,15 +529,6 @@
         });
     });
 
-    function saveApiKey() {
-        const keyInput = document.getElementById('apiKey');
-        apiKey = keyInput.value.trim();
-        if (apiKey) {
-            localStorage.setItem('groq_api_key', apiKey);
-            showNotification('Sync Success', 'success');
-        }
-    }
-
     const uploadArea = document.getElementById('uploadArea');
     const fileInput = document.getElementById('fileInput');
     const browseBtn = document.getElementById('browseBtn');
@@ -671,7 +662,7 @@
         try {
             const response = await fetch('/.netlify/functions/solve', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
                 body: JSON.stringify({
                     messages: [{ role: "user", content: content }],
                     model: "llama-3.2-11b-vision-preview",
@@ -680,7 +671,16 @@
                 })
             });
 
-            if (!response.ok) throw new Error('API Connection Failed');
+            if (!response.ok) {
+                let errorMessage = `Server Error: ${response.status}`;
+                try {
+                    const errData = await response.json();
+                    errorMessage = errData.error || errorMessage;
+                } catch (e) {
+                    if (response.status === 404) errorMessage = "API Endpoint not found. Check Netlify deployment.";
+                }
+                throw new Error(errorMessage);
+            }
 
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
@@ -791,7 +791,7 @@
     // Register Service Worker for PWA
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-            navigator.serviceWorker.register('./sw.js')
+            navigator.serviceWorker.register('./sw.js', { scope: '/' })
                 .then(reg => console.log('Service Worker registered'))
                 .catch(err => console.log('Service Worker failed', err));
         });
