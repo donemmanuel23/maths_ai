@@ -25,6 +25,16 @@
             --card-bg: #ffffff;
         }
 
+        [data-bs-theme="dark"] {
+            --bg-main: #0f172a;
+            --glass: rgba(30, 41, 59, 0.7);
+            --border: #334155;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --card-bg: #1e293b;
+            --bg-light: #334155;
+        }
+
         body {
             background-color: var(--bg-main);
             font-family: 'Plus Jakarta Sans', sans-serif;
@@ -209,6 +219,32 @@
             100% { background-position: -200% 0; }
         }
 
+        /* --- Voice Recording Pulse --- */
+        .recording-pulse {
+            position: relative;
+            z-index: 1;
+        }
+
+        .recording-pulse::before,
+        .recording-pulse::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            background: rgba(220, 53, 69, 0.6);
+            animation: wave-ripple 2s linear infinite;
+            z-index: -1;
+        }
+
+        .recording-pulse::after {
+            animation-delay: 1s;
+        }
+
+        @keyframes wave-ripple {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(3.5); opacity: 0; }
+        }
+
         /* --- Custom Notification --- */
         .toast-custom {
             background: #0f172a;
@@ -267,8 +303,7 @@
             .sidebar .mt-3, 
             .sidebar #historyList, 
             .sidebar .mt-4, 
-            .sidebar .pt-4,
-            .sidebar #apiKeyContainer {
+            .sidebar .pt-4 {
                 grid-column: span 3;
             }
 
@@ -319,6 +354,7 @@
         </div>
 
         <nav class="nav flex-column mb-auto">
+            <a class="nav-link" href="#" onclick="startNewChat()"><i class="bi bi-plus-lg me-2"></i> New Chat</a>
             <a class="nav-link active" href="#" onclick="showSection('dashboard')"><i class="bi bi-house-door me-2"></i> Dashboard</a>
             <div class="mt-3 mb-2 px-3 small text-uppercase fw-bold text-muted" style="font-size: 0.65rem;">Recent Solutions</div>
             <div id="historyList" class="mb-3">
@@ -326,17 +362,8 @@
                 <p class="px-3 small text-muted italic">No history yet</p>
             </div>
             <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#aboutModal"><i class="bi bi-info-circle me-2"></i> About</a>
-            <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#privacyModal"><i class="bi bi-shield-check me-2"></i> Privacy</a>
-            <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#contactModal"><i class="bi bi-envelope me-2"></i> Contact</a>
+            <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#feedbackModal"><i class="bi bi-chat-left-dots me-2"></i> Feedback</a>
         </nav>
-
-        <div class="px-3 mb-3" id="apiKeyContainer">
-            <label class="small text-muted fw-bold mb-2">API Configuration</label>
-            <div class="input-group input-group-sm">
-                <input type="password" id="apiKeyInput" class="form-control rounded-start-pill border-light shadow-sm" placeholder="Paste Groq Key...">
-                <button class="btn btn-primary rounded-end-pill" onclick="saveApiKey()"><i class="bi bi-sync"></i></button>
-            </div>
-        </div>
 
         <div class="px-3 mb-3" id="installContainer" style="display: none;">
             <button class="btn btn-primary btn-sm w-100 rounded-pill" id="installBtn">
@@ -358,7 +385,9 @@
                 <p class="text-muted small">Ready to solve some equations?</p>
             </div>
             <div class="d-flex gap-3">
-                <button class="btn btn-outline-secondary rounded-pill btn-sm px-3"><i class="bi bi-question-circle"></i></button>
+                <button class="btn btn-outline-secondary rounded-pill btn-sm px-3" onclick="toggleDarkMode()" id="themeToggle">
+                    <i class="bi bi-moon-stars"></i>
+                </button>
                 <div class="rounded-pill bg-white border px-3 py-1 d-flex align-items-center gap-2">
                     <span class="small fw-600">Supported by Emmanuel</span>
                 </div>
@@ -465,37 +494,23 @@
             </div>
             <div class="modal-body text-muted">
                 PolySolve AI is a professional academic assistant powered by state-of-the-art Vision models.
-                <hr>
-                <button class="btn btn-outline-danger btn-sm w-100 rounded-pill mt-2" onclick="resetApiKey()" data-bs-dismiss="modal">Reset API Key</button>
             </div>
         </div>
     </div>
 </div>
 
-<div class="modal fade" id="privacyModal" tabindex="-1">
+<div class="modal fade" id="feedbackModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content rounded-4 border-0 shadow">
             <div class="modal-header border-0">
-                <h5 class="modal-title fw-bold">Privacy Policy</h5>
+                <h5 class="modal-title fw-bold">AI Usability Feedback</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body text-muted">
-                Your data is processed in real-time. We store your API key and history locally on your device. We do not store your uploaded images on our servers.
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="modal fade" id="contactModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content rounded-4 border-0 shadow">
-            <div class="modal-header border-0">
-                <h5 class="modal-title fw-bold">Feedback & Support</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body text-muted">
-                <p>Have a suggestion or found a bug? We'd love to hear from you.</p>
-                <a href="mailto:support@omnisolve.ai" class="btn btn-primary w-100 rounded-pill">Email Support</a>
+                <p class="small mb-3">How can we improve the AI's guidance and usability? Your feedback helps us train better models.</p>
+                <textarea id="feedbackText" class="form-control rounded-3 mb-3" rows="4" placeholder="Share your experience or report a logic error..."></textarea>
+                <button class="btn btn-primary w-100 rounded-pill" onclick="submitFeedback()" data-bs-dismiss="modal">Submit Feedback</button>
+                <p class="text-center mt-3 mb-0 small"><a href="mailto:emmanuelademun7@gmail.com" class="text-decoration-none text-muted">Need direct support? Email us.</a></p>
             </div>
         </div>
     </div>
@@ -521,53 +536,56 @@
     menuToggle.addEventListener('click', toggleMenu);
     overlay.addEventListener('click', toggleMenu);
 
+    function startNewChat() {
+        clearImage();
+        if (window.innerWidth < 992) {
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
+        }
+        showNotification('New chat started', 'info');
+    }
+
     let uploadedImage = null;
     let deferredPrompt;
     let lastRequestTime = 0;
     const RATE_LIMIT_MS = 3000; // 3 second cooldown
 
+    function toggleDarkMode() {
+        const html = document.documentElement;
+        const isDark = html.getAttribute('data-bs-theme') === 'dark';
+        html.setAttribute('data-bs-theme', isDark ? 'light' : 'dark');
+        document.getElementById('themeToggle').innerHTML = isDark ? '<i class="bi bi-moon-stars"></i>' : '<i class="bi bi-sun"></i>';
+        localStorage.setItem('theme', isDark ? 'light' : 'dark');
+    }
+
     window.addEventListener('load', function() {
+        if (localStorage.getItem('theme') === 'dark') toggleDarkMode();
         renderHistory();
-        checkApiKey();
 
         // Global Keyboard Shortcuts
         window.addEventListener('keydown', (e) => {
             if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
                 solveMathProblem();
             }
+            if ((e.ctrlKey || e.metaKey) && e.key === 'm') {
+                e.preventDefault();
+                startNewChat();
+            }
             if (e.key === 'Escape') {
                 clearImage();
             }
         });
+
+        // Handle image paste
+        document.addEventListener('paste', (e) => {
+            for (const item of e.clipboardData.items) {
+                if (item.type.indexOf('image') === 0) {
+                    const file = item.getAsFile();
+                    if (file) handleFile(file);
+                }
+            }
+        });
     });
-
-    function saveApiKey() {
-        const input = document.getElementById('apiKeyInput');
-        const key = input.value.trim();
-        if (key) {
-            localStorage.setItem('groq_api_key', key);
-            showNotification('API Key synced successfully!');
-            input.value = '';
-            checkApiKey();
-        }
-    }
-
-    function resetApiKey() {
-        localStorage.removeItem('groq_api_key');
-        checkApiKey();
-        showNotification('API Key cleared. You can now enter a new one in the menu.', 'info');
-    }
-
-    function checkApiKey() {
-        const savedKey = localStorage.getItem('groq_api_key');
-        const input = document.getElementById('apiKeyInput');
-        if (savedKey) {
-            input.placeholder = "Key saved (Update?)";
-        } else {
-            input.placeholder = "Paste Groq Key...";
-        }
-        document.getElementById('apiKeyContainer').style.display = 'block';
-    }
 
     const uploadArea = document.getElementById('uploadArea');
     const fileInput = document.getElementById('fileInput');
@@ -641,31 +659,86 @@
         document.getElementById('customInstructions').value = text;
     }
 
+    // Helper to generate a clean synthetic beep
+    function playTone(freq, duration) {
+        try {
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + duration);
+        } catch (e) { console.warn("Audio feedback failed:", e); }
+    }
+
+    let recognitionInstance = null;
+    let isManualStop = false;
+    let isVoiceRestarting = false;
+
     function startVoiceInput() {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SpeechRecognition) return showNotification('Voice not supported', 'danger');
         
-        const recognition = new SpeechRecognition();
         const voiceBtn = document.getElementById('voiceBtn');
+
+        // Toggle logic: If already listening, stop it manually
+        if (recognitionInstance) {
+            isManualStop = true;
+            recognitionInstance.stop();
+            return;
+        }
+
+        isManualStop = false;
+        isVoiceRestarting = false;
+        const recognition = new SpeechRecognition();
+        recognition.continuous = true; // Prevents the browser from stopping automatically
+        recognitionInstance = recognition;
         
         recognition.onstart = () => {
+            if (!isVoiceRestarting) playTone(660, 0.15);
+            voiceBtn.classList.add('recording-pulse');
             voiceBtn.classList.replace('btn-outline-primary', 'btn-danger');
-            showNotification('Listening...', 'info');
+            if (!isVoiceRestarting) showNotification('Listening... Click mic again to finish', 'info');
+            isVoiceRestarting = false;
         };
         
         recognition.onresult = (event) => {
-            const transcript = event.results[0][0].transcript;
-            document.getElementById('customInstructions').value = transcript;
+            let transcript = '';
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+                transcript += event.results[i][0].transcript;
+            }
+            const area = document.getElementById('customInstructions');
+            area.value = (area.value + ' ' + transcript).trim();
         };
         
         recognition.onend = () => {
+            // If the browser stopped listening but the user didn't click stop, restart it immediately
+            if (!isManualStop && recognitionInstance) {
+                isVoiceRestarting = true;
+                try { recognition.start(); return; } catch (e) { recognitionInstance = null; }
+            }
+
+            playTone(440, 0.15); // Lower pitch for 'Stop'
+            voiceBtn.classList.remove('recording-pulse');
             voiceBtn.classList.replace('btn-danger', 'btn-outline-primary');
+            
+            // Trigger the AI solver only when the user manually stops recording
+            if (isManualStop && document.getElementById('customInstructions').value.trim()) {
+                solveMathProblem();
+            }
+            recognitionInstance = null;
+            isManualStop = false;
         };
         
         try {
             recognition.start();
         } catch (e) {
-            recognition.stop();
+            recognitionInstance = null;
         }
     }
 
@@ -689,32 +762,36 @@
         document.getElementById('streamingIndicator').style.display = 'block';
 
         // Construct the prompt and message content
-        const systemPrompt = `You are an expert academic assistant. Analyze the input and solve the problem. Rules: 1. Step-by-step breakdown. 2. Use LaTeX for math/science ($...$ for inline, $$...$$ for blocks). 3. Professional Markdown. 4. Be precise.`;
-        const content = [];
+        const systemPrompt = `You are a world-class academic tutor and expert problem solver. 
+Your goal is to provide 100% accurate, logically sound, and pedagogical solutions.
+
+STRICT PROTOCOLS:
+1. ANALYSIS: Identify the core question and variables.
+2. REASONING: Use a step-by-step 'Chain of Thought'. Explain the "why" behind each logical jump.
+3. VERIFICATION: Double-check calculations and facts before outputting.
+4. MATH FORMATTING: Use LaTeX for ALL symbols/equations. $...$ for inline, $$...$$ for blocks.
+5. STRUCTURE: Use ### headings for steps and bullet points for clarity.
+6. CONCLUSION: Clearly state the final result at the end.`;
+
+        const messages = [{ role: "system", content: systemPrompt }];
+        const userContent = [];
         
         if (uploadedImage) {
-            content.push({ type: "text", text: `${systemPrompt} ${customMsg ? 'User Instructions: ' + customMsg : ''}` });
-            content.push({ type: "image_url", image_url: { url: uploadedImage } });
+            userContent.push({ type: "text", text: customMsg || "Analyze and solve the problem shown in this image." });
+            userContent.push({ type: "image_url", image_url: { url: uploadedImage } });
         } else {
-            content.push({ type: "text", text: `${systemPrompt} Problem to solve: ${customMsg}` });
+            userContent.push({ type: "text", text: customMsg });
         }
+        messages.push({ role: "user", content: userContent });
 
         try {
-            const localKey = localStorage.getItem('groq_api_key');
-            
-            // Pre-flight check for API Key if not using server-side env variables
-            if (!localKey && !uploadedImage && !customMsg) {
-                 throw new Error('Please enter an API Key in the sidebar configuration.');
-            }
-
             const response = await fetch('/api/solve', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    apiKey: localKey,
-                    messages: [{ role: "user", content: content }],
+                    messages: messages,
                     model: "llama-3.2-11b-vision-preview",
-                    temperature: 0.2
+                    temperature: 0.1 // Lowered for maximum accuracy and determinism
                 })
             });
 
@@ -726,20 +803,35 @@
                 }
 
                 const errorMessage = errorData.error || `Server Error: ${response.status}`;
-                
-                if (response.status === 401 || errorMessage.includes('missing') || errorMessage.includes('Configuration')) {
-                    document.getElementById('apiKeyContainer').style.display = 'block';
-                    throw new Error('API Key Required: Please paste your key in the configuration area.');
-                }
-
                 throw new Error(errorMessage);
             }
 
-            const data = await response.json();
-            const fullContent = data.content;
-            document.getElementById('solutionResult').innerHTML = marked.parse(fullContent);
-            saveToHistory(customMsg.substring(0, 25) || "Analysis Result", fullContent);
-            if (window.MathJax) MathJax.typeset();
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let fullContent = '';
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                
+                const chunk = decoder.decode(value);
+                const lines = chunk.split('\n');
+                for (const line of lines) {
+                    if (line.startsWith('data: ')) {
+                        const dataStr = line.replace('data: ', '');
+                        if (dataStr === '[DONE]') break;
+                        try {
+                            const parsed = JSON.parse(dataStr);
+                            const delta = parsed.choices[0].delta?.content || "";
+                            fullContent += delta;
+                            document.getElementById('solutionResult').innerHTML = marked.parse(fullContent);
+                        } catch (e) {}
+                    }
+                }
+            }
+
+            saveToHistory(customMsg.substring(0, 25) || "New Analysis", fullContent);
+            if (window.MathJax) MathJax.typesetPromise();
         } catch (error) {
             showNotification(error.message, 'danger');
         } finally {
@@ -768,12 +860,21 @@
         if (history.length === 0) return;
 
         container.innerHTML = history.map(item => `
-            <a href="#" class="nav-link small py-2 px-3" onclick="loadHistoryItem(${item.id})">
-                <i class="bi bi-file-text me-2"></i> ${item.subject}
-            </a>
+            <div class="d-flex align-items-center history-item">
+                <a href="#" class="nav-link small py-2 px-3 flex-grow-1" onclick="loadHistoryItem(${item.id})">
+                    <i class="bi bi-file-text me-2"></i> ${item.subject}
+                </a>
+                <button class="btn btn-link btn-sm text-danger opacity-50" onclick="deleteHistoryItem(${item.id})"><i class="bi bi-trash"></i></button>
+            </div>
         `).join('');
     }
 
+    function deleteHistoryItem(id) {
+        let history = JSON.parse(localStorage.getItem('omni_history') || '[]');
+        history = history.filter(item => item.id !== id);
+        localStorage.setItem('omni_history', JSON.stringify(history));
+        renderHistory();
+    }
     function loadHistoryItem(id) {
         const history = JSON.parse(localStorage.getItem('omni_history') || '[]');
         const item = history.find(i => i.id === id);
@@ -781,7 +882,7 @@
             document.getElementById('placeholderResult').style.display = 'none';
             document.getElementById('resultsCard').style.display = 'block';
             document.getElementById('solutionResult').innerHTML = marked.parse(item.content);
-            if (window.MathJax) MathJax.typeset();
+            if (window.MathJax) MathJax.typesetPromise();
             if (window.innerWidth < 992) {
                 sidebar.classList.remove('active');
                 overlay.classList.remove('active');
@@ -809,6 +910,24 @@
         navigator.clipboard.writeText(text).then(() => {
             showNotification('Copied to clipboard!');
         });
+    }
+
+    function submitFeedback() {
+        const feedback = document.getElementById('feedbackText').value.trim();
+        if (feedback) {
+            const email = "emmanuelademun7@gmail.com";
+            const subject = encodeURIComponent("PolySolve AI Usability Feedback");
+            const body = encodeURIComponent(feedback);
+            
+            window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
+            
+            showNotification('Opening your email client...', 'info');
+            document.getElementById('feedbackText').value = '';
+        }
+    }
+
+    function showSection(sectionId) {
+        // Placeholder for future multi-section navigation logic
     }
 
     function showNotification(msg, type = 'info') {
