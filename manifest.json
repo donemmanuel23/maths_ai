@@ -1,7 +1,7 @@
 {
   "name": "PolySolve AI",
   "short_name": "PolySolve",
-  "description": "Universal AI Problem Solver for all academic and technical challenges.",
+  "description": "Universal AI Problem Solver for programmers, health centers, and technical professionals.",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#f8fafc",

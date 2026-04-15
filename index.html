@@ -144,7 +144,7 @@
             background: #fdfdff;
             cursor: pointer; 
         }
-
+        
         .dropzone.drag-over {
             border-color: var(--accent);
             background: #f5f3ff;
@@ -407,15 +407,17 @@
             <div class="col-xl-5">
                 <div class="neo-card p-4 h-100">
                     <h6 class="fw-bold mb-4 d-flex align-items-center"><i class="bi bi-plus-circle-dotted me-2 text-primary"></i>New Problem</h6>
-                    
-                    <div class="dropzone mb-3" id="uploadArea">
-                        <div id="uploadContent">
-                            <i class="bi bi-plus-circle text-primary mb-3" style="font-size: 3rem;"></i>
-                            <h6 class="fw-bold">Add files, upload image</h6>
-                            <p class="text-muted small">PNG, JPG or Screenshot</p>
-                            <button id="browseBtn" class="btn btn-light border btn-sm mt-2 px-4 rounded-pill">Browse Files</button>
+
+                    <div id="inputAreaContainer">
+                        <div class="dropzone mb-3" id="uploadArea">
+                            <div id="uploadContent">
+                                <i class="bi bi-plus-circle text-primary mb-3" style="font-size: 3rem;"></i>
+                                <h6 class="fw-bold">Add files, upload image</h6>
+                                <p class="text-muted small">PNG, JPG or Screenshot</p>
+                                <button id="browseBtn" class="btn btn-light border btn-sm mt-2 px-4 rounded-pill">Browse Files</button>
+                            </div>
+                            <input type="file" id="fileInput" accept="image/*" style="display: none;">
                         </div>
-                        <input type="file" id="fileInput" accept="image/*" style="display: none;">
                     </div>
 
                     <div id="imagePreview" style="display: none;">
@@ -548,7 +550,18 @@
     let uploadedImage = null;
     let deferredPrompt;
     let lastRequestTime = 0;
+    
+    let chatContext = []; // Persists conversation history
     const RATE_LIMIT_MS = 3000; // 3 second cooldown
+
+    // Deployment Configuration
+    const CONFIG = {
+        // If running on localhost, use the local worker. 
+        // Otherwise, use the relative path or a hardcoded production URL.
+        API_ENDPOINT: (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+            ? '/api/solve'
+            : '/api/solve' // Cloudflare Pages automatically routes /api to _worker.js
+    };
 
     function toggleDarkMode() {
         const html = document.documentElement;
@@ -646,6 +659,7 @@
 
     function clearImage() {
         uploadedImage = null;
+        chatContext = []; // Reset AI memory on explicit clear
         document.getElementById('imagePreview').style.display = 'none';
         document.getElementById('uploadArea').style.display = 'block';
         document.getElementById('resultsCard').style.display = 'none';
@@ -773,23 +787,28 @@ STRICT PROTOCOLS:
 5. STRUCTURE: Use ### headings for steps and bullet points for clarity.
 6. CONCLUSION: Clearly state the final result at the end.`;
 
-        const messages = [{ role: "system", content: systemPrompt }];
+        // Initialize context with system prompt if empty
+        if (chatContext.length === 0) {
+            chatContext.push({ role: "system", content: systemPrompt });
+        }
+
         const userContent = [];
-        
         if (uploadedImage) {
             userContent.push({ type: "text", text: customMsg || "Analyze and solve the problem shown in this image." });
             userContent.push({ type: "image_url", image_url: { url: uploadedImage } });
         } else {
             userContent.push({ type: "text", text: customMsg });
         }
-        messages.push({ role: "user", content: userContent });
+
+        // Add user message to history
+        chatContext.push({ role: "user", content: userContent });
 
         try {
-            const response = await fetch('/api/solve', {
+            const response = await fetch(CONFIG.API_ENDPOINT, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    messages: messages,
+                    messages: chatContext,
                     model: "llama-3.2-11b-vision-preview",
                     temperature: 0.1 // Lowered for maximum accuracy and determinism
                 })
@@ -809,13 +828,16 @@ STRICT PROTOCOLS:
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
             let fullContent = '';
+            let lineBuffer = ''; // Buffer for partial chunks
 
             while (true) {
                 const { done, value } = await reader.read();
                 if (done) break;
                 
-                const chunk = decoder.decode(value);
-                const lines = chunk.split('\n');
+                lineBuffer += decoder.decode(value, { stream: true });
+                const lines = lineBuffer.split('\n');
+                lineBuffer = lines.pop(); // Keep partial line in buffer
+
                 for (const line of lines) {
                     if (line.startsWith('data: ')) {
                         const dataStr = line.replace('data: ', '');
@@ -830,7 +852,10 @@ STRICT PROTOCOLS:
                 }
             }
 
-            saveToHistory(customMsg.substring(0, 25) || "New Analysis", fullContent);
+            // Add AI response to history for next follow-up
+            chatContext.push({ role: "assistant", content: fullContent });
+            
+            saveToHistory(customMsg.substring(0, 25) || (uploadedImage ? "Visual Analysis" : "New Chat"), fullContent);
             if (window.MathJax) MathJax.typesetPromise();
         } catch (error) {
             showNotification(error.message, 'danger');
