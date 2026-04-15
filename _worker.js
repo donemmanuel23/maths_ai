@@ -31,7 +31,7 @@ export default {
           body: JSON.stringify({
             model: "llama-3.2-11b-vision-preview",
             messages: body.messages,
-            temperature: 0.2,
+            temperature: 0.1,
             stream: true
           }),
         });
@@ -45,6 +45,6 @@ export default {
       }
     }
 
-    return new Response("Not Found", { status: 404 });
+    return env.ASSETS.fetch(request);
   },
 };
